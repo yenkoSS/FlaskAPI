@@ -1,3 +1,4 @@
+from flask import Response
 import sqlalchemy.exc
 from flask_smorest import Blueprint, abort
 from flask.views import MethodView
@@ -32,7 +33,7 @@ class StoreId(MethodView):
         if store:
             return store
         else:
-            abort(404, message='Store not found.')
+            return abort(404, exc='Hello World')
 
     @stores_blp.arguments(UpdateStoreSchema)
     @stores_blp.response(200, CreateStoreSchema)

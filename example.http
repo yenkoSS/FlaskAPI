@@ -1,0 +1,11 @@
+### get sore items
+GET http://127.0.0.1:5000/store/6
+
+### add store
+POST http://127.0.0.1:5000/store
+
+Content-Type: application/json
+
+{
+    "name": "Coke_Vanilla"
+}

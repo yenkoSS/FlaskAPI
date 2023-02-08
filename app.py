@@ -1,6 +1,7 @@
 from flask import Flask
 from db import db
 from stores.routes import stores_blp
+from items.routes import item_blp
 
 
 def create_app():
@@ -9,12 +10,12 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 
     app.register_blueprint(stores_blp)
+    app.register_blueprint(item_blp)
 
     db.init_app(app)
     with app.app_context():
         db.create_all()
 
-    app.debug=True
     app.run(debug=True)
 
 

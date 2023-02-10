@@ -1,3 +1,4 @@
-*.idea
 *.pyc
-/instance/database.db
+
+instance/
+__pycache__/

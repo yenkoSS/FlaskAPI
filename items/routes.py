@@ -48,7 +48,6 @@ class Item(MethodView):
 @items_blp.route('/item/<int:item_id>')
 class ItemId(MethodView):
 
-    @check_token
     @items_blp.response(200, ItemPostSchema)
     def get(self, item_id):
         item = ItemModel.query.get(item_id)

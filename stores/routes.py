@@ -1,9 +1,9 @@
-from flask import Response
 import sqlalchemy.exc
-from flask_smorest import Blueprint, abort
+from flask_smorest import Blueprint
 from flask.views import MethodView
-from stores.schema import CreateStoreSchema, UpdateStoreSchema
+from stores.schema import StorePostSchema, StoreUpdateSchema
 from stores.model import StoreModel
+from flask import jsonify
 from db import db
 
 
@@ -12,52 +12,44 @@ stores_blp = Blueprint('Stores', __name__, description='Operations on stores')
 @stores_blp.route('/store')
 class Store(MethodView):
 
-    @stores_blp.arguments(CreateStoreSchema)
-    @stores_blp.response(201, CreateStoreSchema)
+    @stores_blp.arguments(StorePostSchema)
     def post(self, data):
-        new_store = StoreModel(**data)
         try:
+            new_store = StoreModel(**data)
             db.session.add(new_store)
             db.session.commit()
+            return jsonify({'message': 'Store added.'}), 201
         except sqlalchemy.exc.IntegrityError:
-            abort(500, message="Store already exists.")
-        return new_store
+            return jsonify({'message': 'Store already exists in database.'}), 409
+
 
 
 @stores_blp.route('/store/<int:store_id>')
-class StoreId(MethodView):
+class ItemId(MethodView):
 
-    @stores_blp.response(200, CreateStoreSchema)
+    @stores_blp.response(200, StorePostSchema)
     def get(self, store_id):
-        store = StoreModel.query.filter(StoreModel.id == store_id).first()
-        if store:
-            return store
-        else:
-            return abort(404, exc='Hello World')
-
-    @stores_blp.arguments(UpdateStoreSchema)
-    @stores_blp.response(200, CreateStoreSchema)
-    def put(self, data, store_id):
-
-        store = StoreModel.query.filter(StoreModel.id == store_id).first()
-        if store:
-            store.name = data['name']
-            try:
-                db.session.commit()
-            except Exception:
-                abort(500, message='Store name already exists.')
-            return store
-        else:
-            abort(404, message="Store not found.")
-
+        store = StoreModel.query.get(store_id)
+        if not store:
+            return jsonify({'message': 'Store not found.'}), 404
+        return store
 
     def delete(self, store_id):
-        store = StoreModel.query.filter(StoreModel.id == store_id).first()
-        if store:
-            try:
-                db.session.delete(store)
-                db.session.commit()
-                return {'message': 'Store deleted.'}
-            except sqlalchemy.exc.IntegrityError:
-                abort(500, message='Store not found.')
-        return {'message': 'Store not found.'}, 404
+        store = StoreModel.query.get(store_id)
+        if not store:
+            return jsonify({'message': 'Store not found.'}), 404
+        db.session.delete(store)
+        db.session.commit()
+        return jsonify({'message': 'Store deleted.'}), 200
+
+
+    @stores_blp.arguments(StoreUpdateSchema)
+    @stores_blp.response(200, StorePostSchema)
+    def put(self, data, store_id):
+        store = StoreModel.query.get(store_id)
+        if not store:
+            return jsonify({'message': 'Store not found.'}), 404
+        store.name = data['name']
+        store.price = data['price']
+        db.session.commit()
+        return store

@@ -1,13 +1,13 @@
 from marshmallow import Schema, fields
 
 
-class CreateStoreSchema(Schema):
+class StorePostSchema(Schema):
 
     id = fields.Integer(dump_only=True)
     name = fields.String(required=True)
 
 
-class UpdateStoreSchema(Schema):
+class StoreUpdateSchema(Schema):
 
     name = fields.String(required=True)
 

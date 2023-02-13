@@ -1,5 +1,6 @@
 Flask==2.2.2
 flask_smorest==0.40.0
 flask_sqlalchemy==3.0.2
+sqlalchemy==2.0.3
 marshmallow==3.19.0
 pyjwt==2.6.0

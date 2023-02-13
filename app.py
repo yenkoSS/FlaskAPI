@@ -4,7 +4,6 @@ from stores.routes import stores_blp
 from items.routes import items_blp
 
 
-
 def create_app():
     app = Flask(__name__)
 

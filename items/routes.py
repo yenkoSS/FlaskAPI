@@ -1,39 +1,21 @@
-import jwt
 import sqlalchemy.exc
-from flask import jsonify, request
+from flask import jsonify
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from items.schema import ItemPostSchema, ItemUpdateSchema
 from items.model import ItemModel
 from db import db
-from functools import wraps
-from flask import current_app
+from JWT.jwt_token import role_check
+from JWT.roles import ADMIN, MODERATOR, BASIC
 
 
 items_blp = Blueprint('Items', __name__, description='Operations on items')
 
 
-def check_token(f):
-    @wraps(f)
-    def decorator(*args, **kwargs):
-
-        header_token = request.headers.get('Authorization')
-
-        if not header_token:
-            return jsonify({'message': 'token not found!'}), 404
-        try:
-            token = header_token.split(' ')
-            decoded_token = jwt.decode(token[1], current_app.config.get('JWT_SECRET_KEY'), ['HS256'])
-            return f(*args, **kwargs)
-        except Exception:
-            return jsonify({'message': 'invalid token key.'})
-    return decorator
-
-
 @items_blp.route('/item')
 class Item(MethodView):
 
-    @check_token
+    @role_check([ADMIN, MODERATOR])
     @items_blp.arguments(ItemPostSchema)
     def post(self, data):
         try:
@@ -48,6 +30,7 @@ class Item(MethodView):
 @items_blp.route('/item/<int:item_id>')
 class ItemId(MethodView):
 
+    @role_check([ADMIN, MODERATOR, BASIC])
     @items_blp.response(200, ItemPostSchema)
     def get(self, item_id):
         item = ItemModel.query.get(item_id)
@@ -55,7 +38,7 @@ class ItemId(MethodView):
             return jsonify({'message': 'Item not found.'}), 404
         return item
 
-    @check_token
+    @role_check([ADMIN])
     def delete(self, item_id):
         item = ItemModel.query.get(item_id)
         if not item:
@@ -64,8 +47,7 @@ class ItemId(MethodView):
         db.session.commit()
         return jsonify({'message': 'Item deleted.'}), 200
 
-
-    @check_token
+    @role_check([ADMIN])
     @items_blp.arguments(ItemUpdateSchema)
     @items_blp.response(200, ItemPostSchema)
     def put(self, data, item_id):
@@ -76,4 +58,3 @@ class ItemId(MethodView):
         item.price = data['price']
         db.session.commit()
         return item
-

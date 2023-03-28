@@ -5,6 +5,8 @@ from stores.schema import StorePostSchema, StoreUpdateSchema
 from stores.model import StoreModel
 from flask import jsonify
 from db import db
+from JWT.jwt_token import role_check
+from JWT.roles import ADMIN, MODERATOR, BASIC
 
 
 stores_blp = Blueprint('Stores', __name__, description='Operations on stores')
@@ -12,6 +14,7 @@ stores_blp = Blueprint('Stores', __name__, description='Operations on stores')
 @stores_blp.route('/store')
 class Store(MethodView):
 
+    @role_check([ADMIN, MODERATOR])
     @stores_blp.arguments(StorePostSchema)
     def post(self, data):
         try:
@@ -27,6 +30,7 @@ class Store(MethodView):
 @stores_blp.route('/store/<int:store_id>')
 class ItemId(MethodView):
 
+    @role_check([ADMIN, MODERATOR, BASIC])
     @stores_blp.response(200, StorePostSchema)
     def get(self, store_id):
         store = StoreModel.query.get(store_id)
@@ -34,6 +38,7 @@ class ItemId(MethodView):
             return jsonify({'message': 'Store not found.'}), 404
         return store
 
+    @role_check([ADMIN])
     def delete(self, store_id):
         store = StoreModel.query.get(store_id)
         if not store:
@@ -42,7 +47,7 @@ class ItemId(MethodView):
         db.session.commit()
         return jsonify({'message': 'Store deleted.'}), 200
 
-
+    @role_check([ADMIN])
     @stores_blp.arguments(StoreUpdateSchema)
     @stores_blp.response(200, StorePostSchema)
     def put(self, data, store_id):

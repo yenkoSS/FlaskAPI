@@ -5,7 +5,8 @@ from flask_smorest import Blueprint
 from items.schema import ItemPostSchema, ItemUpdateSchema
 from items.model import ItemModel
 from db import db
-from jwt_token import role_check
+from JWT.jwt_token import role_check
+from JWT.roles import ADMIN, MODERATOR, BASIC
 
 
 items_blp = Blueprint('Items', __name__, description='Operations on items')
@@ -14,7 +15,7 @@ items_blp = Blueprint('Items', __name__, description='Operations on items')
 @items_blp.route('/item')
 class Item(MethodView):
 
-    @role_check('admin')
+    @role_check([ADMIN, MODERATOR])
     @items_blp.arguments(ItemPostSchema)
     def post(self, data):
         try:
@@ -29,7 +30,7 @@ class Item(MethodView):
 @items_blp.route('/item/<int:item_id>')
 class ItemId(MethodView):
 
-    @role_check('admin')
+    @role_check([ADMIN, MODERATOR, BASIC])
     @items_blp.response(200, ItemPostSchema)
     def get(self, item_id):
         item = ItemModel.query.get(item_id)
@@ -37,7 +38,7 @@ class ItemId(MethodView):
             return jsonify({'message': 'Item not found.'}), 404
         return item
 
-    @role_check('admin')
+    @role_check([ADMIN])
     def delete(self, item_id):
         item = ItemModel.query.get(item_id)
         if not item:
@@ -46,7 +47,7 @@ class ItemId(MethodView):
         db.session.commit()
         return jsonify({'message': 'Item deleted.'}), 200
 
-    @role_check('admin')
+    @role_check([ADMIN])
     @items_blp.arguments(ItemUpdateSchema)
     @items_blp.response(200, ItemPostSchema)
     def put(self, data, item_id):
